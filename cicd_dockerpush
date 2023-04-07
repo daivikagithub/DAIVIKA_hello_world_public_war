@@ -1,0 +1,56 @@
+pipeline{
+    agent any
+    stages{
+        stage('checkout'){
+            steps{
+                cleanWs()
+                git branch: 'main', url: 'https://github.com/daivikagithub/DAIVIKA_hello_world_public_war.git'
+                // sh "git clone https://github.com/Siddeshg672/hello_world_public_war.git -b main"
+            }
+        }
+        stage("compile"){
+            steps{
+                sh "mvn clean install"
+                sh "cp -R webapp/target/webapp.war ."                 
+                sh "mv webapp.war webapp-${BUILD_NUMBER}.war"
+            }
+            
+        }
+        // stage('upload war to jfrog'){
+        //     steps{
+        //         rtUpload (
+        //             // Obtain an Artifactory server instance, defined in Jenkins --> Manage Jenkins --> Configure System:                 
+        //             serverId: "jfrog",                     
+        //             spec: """{                             
+        //                 "files": [                                     
+        //                         {                                         
+        //                           "pattern": "webapp-${BUILD_NUMBER}.war",                                         
+        //                           "target": "libs-snapshot-local"
+        //                         }                                 
+        //                     ]                             
+        //             }"""                 
+        //         )             
+        //     }
+        stage('docker image creation'){
+            // when { expression { action == 'closed' }}
+            steps{
+                sh "docker build -t dvs-image-creation:1.0 -f Dockerfile ."
+            }
+        }
+        stage('publish image to docker repo'){
+            // when { expression { action == 'closed' }}
+            steps{
+               withCredentials([string(credentialsId: 'docker-hub', variable: 'dockerhubpwd')]) {
+                    sh "docker login -u daivikavs1998 -p ${dockerhubpwd}"
+                    sh "docker tag dvs-image-creation:1.0 daivikavs1998/dvsdeployimage:nov-${BUILD_NUMBER}"
+                    sh "docker push daivikavs1998/dvsdeployimage:nov-${BUILD_NUMBER}"
+                }
+            }
+        }
+    }
+}
+
+
+
+
+    
