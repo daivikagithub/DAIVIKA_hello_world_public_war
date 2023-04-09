@@ -1,0 +1,14 @@
+---
+- hosts: websever
+  tasks:
+    - name: login to jfrog
+      shell: docker login -u daivikavs1998 -p vish@1957 
+    
+    - name: pull an image
+      shell: docker pull daivikavs1998/dvsdeployimage:nov-53
+      
+  #  - name: remove container
+    #  shell: docker rm -f devopsAppDeploy
+  
+    - name: create a application container
+      shell: docker run -id --name devopsAppDeploy -p 8111:8080 daivikavs1998/dvsdeployimage:nov-53
